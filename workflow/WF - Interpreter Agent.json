@@ -1,0 +1,142 @@
+{
+  "name": "WF - Interpreter Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "text",
+              "value": "={{ $json.body.text }}"
+            },
+            {
+              "name": "user",
+              "value": "={{ $json.body.user }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0e920a41-b0f0-47ad-99f9-ab7598076f41",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "YOUR_APIKEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an AI operations analyst. Return ONLY valid JSON without markdown,```json, backticks or explanations.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Analyze this request and extract:\\n- intent\\n- category (technical | billing | general | other)\\n- urgency (low | medium | high | critical)\\n- summary\\n- requires_action (true/false)\\n\\nReturn ONLY valid JSON in this format:\\n{\\n  \\\"intent\\\": \\\"string\\\",\\n  \\\"category\\\": \\\"string\\\",\\n  \\\"urgency\\\": \\\"string\\\",\\n  \\\"summary\\\": \\\"string\\\",\\n  \\\"requires_action\\\": true\\n}\\n\\nRequest: {{$json.text}}\"\n    }\n  ],\n  \"temperature\": 0.2\n}",
+        "options": {}
+      },
+      "id": "c489a442-d7b9-4fd9-bf9f-50530472f6f7",
+      "name": "Groq LLM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Normalize Input').first().json.body;\nconst content = $input.first().json.choices[0].message.content;\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(content);\n} catch (error) {\n  parsed = {\n    error: \"Invalid JSON\",\n    raw: content\n  };\n}\n\nreturn [{\n  ...original,  // 👈 text, user\n  ...parsed     // 👈 intent, urgency, etc.\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        0
+      ],
+      "id": "ffdde277-faae-4c25-b288-a2165ce5ef1c",
+      "name": "Parse Json",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        0
+      ],
+      "id": "ca6b1d14-70cc-47b8-a23b-12a56e8683eb",
+      "name": "When Executed by Another Workflow",
+      "alwaysOutputData": false
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "Groq LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq LLM": {
+      "main": [
+        [
+          {
+            "node": "Parse Json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Json": {
+      "main": [
+        []
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b2c9b931-9cd1-4dcc-9547-71a02e5e0347",
+  "meta": {
+    "instanceId": "d1c6dd9e772e2acc0c2f5e585548576a83bb4216255329b02a3bb17e0bca0159"
+  },
+  "id": "bYRM3LcPUVqO6msE",
+  "tags": []
+}

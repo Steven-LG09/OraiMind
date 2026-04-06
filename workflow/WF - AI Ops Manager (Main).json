@@ -1,0 +1,229 @@
+{
+  "name": "WF - AI Ops Manager (Main)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-ops-manager",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "c7137214-f14a-4f0d-83ee-8dd173e1c33e",
+      "name": "Main Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "webhookId": "0caecd93-296e-462c-80dc-57b29c640c12"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"processed\",\n  \"request_id\": \"{{$json.id || 'generated-id'}}\",\n  \"priority\": \"{{ $json.priority }}\",\n  \"sla\": {\n    \"response_time_minutes\":{{ $('Call \\'WF - Task Manager Agent\\'').item.json.sla_minutes }} \n  },\n  \"message\": \"Your request has been analyzed and routed\"\n}",
+        "options": {}
+      },
+      "id": "968b869a-970f-49ac-acec-2d362aab4ad8",
+      "name": "Final Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "bYRM3LcPUVqO6msE",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/bYRM3LcPUVqO6msE",
+          "cachedResultName": "WF - Interpreter Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "8ce04848-47e2-46b2-ab60-0dfde3fa60da",
+      "name": "Call 'WF - Interpreter Agent'",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "M0UMIls54KMowOlH",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/M0UMIls54KMowOlH",
+          "cachedResultName": "WF - Prioritization Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "6e36075f-0fba-4896-87f4-805a8a541e5e",
+      "name": "Call 'WF - Prioritization Agent'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "FcpWpy6RS360Irte",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/FcpWpy6RS360Irte",
+          "cachedResultName": "WF - Task Manager Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        0
+      ],
+      "id": "4be6dc48-c2e9-4335-a57d-6c0944d48c5d",
+      "name": "Call 'WF - Task Manager Agent'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "epgJUwX7WfLsLHNX",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/epgJUwX7WfLsLHNX",
+          "cachedResultName": "WF - Memory Writer"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1056,
+        0
+      ],
+      "id": "26f7ab74-bc5c-4f5d-b2cd-1d5138fd94b8",
+      "name": "Call 'WF - Memory Writer'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Main Webhook": {
+      "main": [
+        [
+          {
+            "node": "Call 'WF - Interpreter Agent'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'WF - Interpreter Agent'": {
+      "main": [
+        [
+          {
+            "node": "Call 'WF - Prioritization Agent'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'WF - Prioritization Agent'": {
+      "main": [
+        [
+          {
+            "node": "Call 'WF - Task Manager Agent'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'WF - Task Manager Agent'": {
+      "main": [
+        [
+          {
+            "node": "Call 'WF - Memory Writer'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'WF - Memory Writer'": {
+      "main": [
+        [
+          {
+            "node": "Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "42843f8d-9fe1-4f5f-8db3-7fcd53bcd201",
+  "meta": {
+    "instanceId": "d1c6dd9e772e2acc0c2f5e585548576a83bb4216255329b02a3bb17e0bca0159"
+  },
+  "id": "vQgiUxQruKJe04Pv",
+  "tags": []
+}

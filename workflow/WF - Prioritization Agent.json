@@ -1,0 +1,173 @@
+{
+  "name": "WF - Prioritization Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "YOUR_APIKEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"temperature\": 0.2,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an operations manager AI.\\nReturn ONLY valid JSON without markdown,```json, backticks or explanations.\\n\\nIMPORTANT:\\nYou MUST follow the SLA rules strictly.\\nYou are NOT allowed to invent SLA values.\\n\\nSLA RULES:\\nP1 - Critical → 15 minutes\\nP2 - High → 60 minutes\\nP3 - Medium → 240 minutes\\nP4 - Low → 1440 minutes\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Refine this prioritization based on business impact.\\n\\nData:\\nintent: {{$json.intent}}\\ncategory: {{$json.category}}\\nurgency: {{$json.urgency}}\\nsummary: {{$json.summary}}\\nrequires_action: {{$json.requires_action}}\\nimpact: {{$json.impact}}\\npriority: {{$json.priority}}\\npriority_label: {{$json.priority_label}}\\nsla_minutes: {{$json.sla_minutes}}\\n\\nRULES:\\n- You may adjust priority ONLY if justified\\n- If priority changes, SLA MUST match the table above\\n- SLA must be EXACTLY one of: 15, 60, 240, 1440\\n\\nReturn ONLY JSON:\\n{\\n  \\\"priority\\\": number,\\n  \\\"priority_label\\\": \\\"P1 - Critical | P2 - High | P3 - Medium | P4 - Low\\\",\\n  \\\"sla_minutes\\\": 15 | 60 | 240 | 1440,\\n  \\\"impact\\\": \\\"low | medium | high\\\",\\n  \\\"reasoning\\\": \\\"short explanation\\\"\\n}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "7d822029-421e-49db-99f7-f12d2dbcc872",
+      "name": "Groq Refinement",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        816,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let impact = \"low\";\n\nif ($input.first().json.urgency === \"critical\") impact = \"high\";\nelse if ($input.first().json.urgency === \"high\") impact = \"medium\";\n\nreturn [{ ...$input, impact }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "0f0b0cbf-281f-4430-adda-5cb38f944996",
+      "name": "Calculate Impact"
+    },
+    {
+      "parameters": {
+        "jsCode": "let priority, sla_minutes, priority_label;\n\nif ($('When Executed by Another Workflow').first().json.urgency === \"critical\" && $input.first().json.impact === \"high\") {\n  priority = 1;\n  sla_minutes = 15;\n  priority_label = \"P1 - Critical\";\n} else if ($('When Executed by Another Workflow').first().json.urgency === \"high\") {\n  priority = 2;\n  sla_minutes = 60;\n  priority_label = \"P2 - High\";\n} else if ($('When Executed by Another Workflow').first().json.urgency === \"medium\") {\n  priority = 3;\n  sla_minutes = 240;\n  priority_label = \"P3 - Medium\";\n} else {\n  priority = 4;\n  sla_minutes = 1440;\n  priority_label = \"P4 - Low\";\n}\n\nreturn [{ ...$input, priority, sla_minutes, priority_label }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "id": "b7437239-5d71-4fad-9ae5-27c6456f86ca",
+      "name": "Base SLA Rules"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"intent\": \"{{ $('When Executed by Another Workflow').item.json.intent }}\",\n  \"category\": \"{{ $('When Executed by Another Workflow').item.json.category }}\",\n  \"urgency\": \"{{ $('When Executed by Another Workflow').item.json.urgency }}\",\n  \"summary\": \"{{ $('When Executed by Another Workflow').item.json.summary }}\",\n  \"requires_action\": \"{{ $('When Executed by Another Workflow').item.json.requires_action }}\",\n  \"impact\": \"{{ $('Calculate Impact').item.json.impact }}\",\n  \"priority\": \"{{ $json.priority }}\",\n  \"priority_label\": \"{{ $json.priority_label }}\",\n  \"sla_minutes\": \"{{ $json.sla_minutes }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        0
+      ],
+      "id": "dd18ce25-1757-46ba-a386-971c39077d42",
+      "name": "Clean Data for AI"
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Calculate Impact').first().json.item.json;\nconst content = $input.first().json.choices[0].message.content;\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(content);\n} catch (error) {\n  parsed = {\n    error: \"Invalid JSON\",\n    raw: content\n  };\n}\n\nreturn [{\n  ...original, \n  ...parsed     \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        0
+      ],
+      "id": "e1dcbd8e-3e77-4bbb-bb26-277d8900ddfa",
+      "name": "Parse Output"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f9f00675-018a-4a41-b548-0069179107f8",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Groq Refinement": {
+      "main": [
+        [
+          {
+            "node": "Parse Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Impact": {
+      "main": [
+        [
+          {
+            "node": "Base SLA Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Base SLA Rules": {
+      "main": [
+        [
+          {
+            "node": "Clean Data for AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Data for AI": {
+      "main": [
+        [
+          {
+            "node": "Groq Refinement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Calculate Impact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b6bd1906-47de-4bb6-9db3-80d590ceb06f",
+  "meta": {
+    "instanceId": "d1c6dd9e772e2acc0c2f5e585548576a83bb4216255329b02a3bb17e0bca0159"
+  },
+  "id": "M0UMIls54KMowOlH",
+  "tags": []
+}

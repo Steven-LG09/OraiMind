@@ -1,0 +1,186 @@
+{
+  "name": "WF - Memory Writer",
+  "nodes": [
+    {
+      "parameters": {
+        "functionCode": "const id = `TCK-${Date.now()}`;\n\nreturn [{\n  id,\n  user: $json.user,\n  summary: $json.summary,\n  priority: $json.priority_label,\n  status: \"open\",\n  created_at: new Date().toISOString(),\n  updated_at: new Date().toISOString()\n}];"
+      },
+      "id": "3163eabe-cbc0-408f-82b1-a297d060846c",
+      "name": "Format Ticket",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        48,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "25c53549-168a-48f7-9178-d83a66eb2ccf",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "16fhDp-FMgGjXlnZYGnE4LkJKBWL-Bzk0jA9QauOMfFM",
+          "mode": "list",
+          "cachedResultName": "Memory Layer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16fhDp-FMgGjXlnZYGnE4LkJKBWL-Bzk0jA9QauOMfFM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tasks",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16fhDp-FMgGjXlnZYGnE4LkJKBWL-Bzk0jA9QauOMfFM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "status": "={{ $json.status }}",
+            "created_at": "={{ $json.created_at }}",
+            "updated_at": "={{ $json.updated_at }}",
+            "user": "={{ $json.user }}",
+            "summary": "={{ $json.summary }}",
+            "priority": "={{ $json.priority }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "user",
+              "displayName": "user",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        256,
+        0
+      ],
+      "id": "1cccee77-0573-41cd-ac76-d3d0cfa3bd4b",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OxnsVohqh9QRZekG",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Format Ticket": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Format Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "5bd8e52d-b268-45b0-a9ca-21eaf7dd518d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d1c6dd9e772e2acc0c2f5e585548576a83bb4216255329b02a3bb17e0bca0159"
+  },
+  "id": "epgJUwX7WfLsLHNX",
+  "tags": []
+}

@@ -1,0 +1,334 @@
+{
+  "name": "WF - Task Manager Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "your_slack_url",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{$json[\"text\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f7d8326f-b00c-4797-84ae-604016340e55",
+      "name": "Send to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        256,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "4e87b0e9-11bb-47f7-a5ed-2a1d1f1981b0"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1feba34b-aa55-4ce8-ad4f-1324b025dc75",
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "57aba254-26bd-42fc-93af-5ddaa220c06a",
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": 3,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "81b366bb-596c-47b2-bf46-b31aa2d0cfd3",
+                    "leftValue": "={{ $json.priority }}",
+                    "rightValue": 4,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -256,
+        160
+      ],
+      "id": "f1127130-988c-4e9e-bd39-a6aab0d24558",
+      "name": "Priority Router"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  text: `🚨 *CRITICAL ALERT*\n\nIssue: ${$('When Executed by Another Workflow').first().json.summary}\nPriority: ${$('When Executed by Another Workflow').first().json.priority_label}\nSLA: ${$('When Executed by Another Workflow').first().json.sla_minutes} min\nUser: ${$('When Executed by Another Workflow').first().json.user}`\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "001a642e-65a0-4bab-8850-a9097afa1ef9",
+      "name": "Build P1 Message"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  text: `⚠️ *High Priority Task*\n\n${$('When Executed by Another Workflow').first().json.summary}\nSLA: ${$('When Executed by Another Workflow').first().json.sla_minutes} min`\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        160
+      ],
+      "id": "748c25d8-a0e2-403d-85b0-8f99d3279267",
+      "name": "Build P2 Message"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  text: `📝 Task queued:\n${$('When Executed by Another Workflow').first().json.summary}`}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        304
+      ],
+      "id": "42006b28-5d1d-4f9a-be22-8cba6586974e",
+      "name": "Build P3 Message"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -448,
+        160
+      ],
+      "id": "8ed31675-cc00-44f4-ab99-8c446d273942",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('When Executed by Another Workflow').first().json;\n\nreturn [\n  {\n    ...input\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        160
+      ],
+      "id": "4087aea6-2089-43a8-9a51-d5304acfcd5a",
+      "name": "Final Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  text: `📝 Task Registered NOT IMPORTANT:\n${$('When Executed by Another Workflow').first().json.summary}`}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        432
+      ],
+      "id": "957b3dfa-a278-48b8-a57a-9c464f61171b",
+      "name": "Build P4 Message"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Priority Router": {
+      "main": [
+        [
+          {
+            "node": "Build P1 Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build P2 Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build P3 Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build P4 Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build P1 Message": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build P2 Message": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build P3 Message": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Priority Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Slack": {
+      "main": [
+        [
+          {
+            "node": "Final Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build P4 Message": {
+      "main": [
+        [
+          {
+            "node": "Send to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e4228fd3-f0dc-4b26-bf27-019994e6aa6a",
+  "meta": {
+    "instanceId": "d1c6dd9e772e2acc0c2f5e585548576a83bb4216255329b02a3bb17e0bca0159"
+  },
+  "id": "FcpWpy6RS360Irte",
+  "tags": []
+}
